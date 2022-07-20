@@ -707,7 +707,7 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost/*"
+        "http://localhost/auth"
       ],
       "webOrigins": [
         "http://localhost"

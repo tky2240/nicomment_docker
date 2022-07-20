@@ -1,0 +1,36 @@
+version: '3.9'
+services:
+  webclient:
+    build: ./webclient/
+    volumes:
+      - ./webclient:/usr/src/app
+    working_dir: /usr/src/app
+    command: sh -c "yarn start"
+    ports:
+      - "3000:3000"
+    stdin_open: true
+  keycloak:
+    image: jboss/keycloak:latest
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KEYCLOAK_IMPORT: /opt/jboss/keycloak/realm-config/realm-export.json
+    volumes:
+      - ./keycloak:/opt/jboss/keycloak/realm-config
+    ports:
+      - 8080:8080
+  server:
+    build: ./server/
+    volumes:
+      - ./server:/usr/src/server
+    working_dir: /usr/src/server
+    command: sh -c "go build && ./nicomment"
+    ports:
+      - "8008:8008"
+    stdin_open: true
+  reverse-proxy:
+    image: nginx:stable
+    volumes:
+      - ./reverse-proxy/:/etc/nginx
+    ports:
+      - 80:80
