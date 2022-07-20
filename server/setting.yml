@@ -1,0 +1,5 @@
+IP: ""
+Port: 8008
+AllowOrigins:
+  - ""
+  - "http://localhost"
