@@ -13,6 +13,8 @@
 ## コメント表示クライアントの使い方
 nicomment.exeを起動させてください
 
+起動しない場合は[.NET6のランタイム](https://dotnet.microsoft.com/ja-jp/download/dotnet/6.0)を入れてください
+
 ホストを変えている場合は設定からホスト名を変更してください
 
 ## keycloack新規登録用メールの送り方
