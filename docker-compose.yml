@@ -1,16 +1,19 @@
 version: '3.9'
 services:
+
   webclient:
     build: ./webclient/
     volumes:
       - ./webclient:/usr/src/app
     working_dir: /usr/src/app
     command: sh -c "yarn && yarn start"
+    restart: on-failure
     ports:
       - "3000:3000"
     stdin_open: true
     networks:
       - net1
+
   keycloak:
     image: jboss/keycloak:latest
     environment:
@@ -20,27 +23,70 @@ services:
       PROXY_ADDRESS_FORWARDING: true
     volumes:
       - ./keycloak:/opt/jboss/keycloak/realm-config
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/auth/" ]
+      interval: 5s
+      timeout: 2s
+      retries: 30
     ports:
       - 8080:8080
     networks:
       - net1
+
   server:
     build: ./server/
     volumes:
       - ./server:/usr/src/server
     working_dir: /usr/src/server
     command: sh -c "go build && ./nicomment"
+    restart: on-failure
     ports:
       - "8008:8008"
     stdin_open: true
     networks:
       - net1
-  reverse-proxy:
+  reverse_proxy:
     image: nginx:latest
     volumes:
       - ./reverse-proxy/default.conf:/etc/nginx/conf.d/default.conf
     ports:
       - 80:80
+    depends_on:
+      oauth2_proxy:
+        condition: service_healthy
+    networks:
+      - net1
+
+  oauth2_proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4180/ping"
+        ]
+      interval: 10s
+      timeout: 5s
+    ports:
+      - 4180:4180
+    environment:
+      OAUTH2_PROXY_PROVIDER: "keycloak-oidc"
+      OAUTH2_PROXY_CLIENT_ID: "nicomment-webclient"
+      OAUTH2_PROXY_CLIENT_SECRET: "jTRK5NpSIF2IY0oGoMJERZdfGx9QNzaF"
+      OAUTH2_PROXY_REDIRECT_URL: "http://localhost/oauth2/callback"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: "http://keycloak:8080/auth/realms/NiComment"
+      OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180"
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_COOKIE_SECRET: "EXXKyl8vV-gj7cPCvKyHR7lYV2i96vjovrK0ArkNVjY="
+      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: "true"
+      OAUTH2_UPSTREAM: "http://localhost:8080"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+
     networks:
       - net1
 networks:

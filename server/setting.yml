@@ -3,3 +3,4 @@ Port: 8008
 AllowOrigins:
   - ""
   - "http://localhost"
+  - "http://172.18.0.1"
